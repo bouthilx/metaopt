@@ -9,7 +9,7 @@
       and link them with a particular existing experiment.
 
 """
-from orion.core import resolve_config
+from orion.core.cli import resolve_config
 from orion.core.io.database import Database
 from orion.core.utils import (format_trials, SingletonError,)
 from orion.core.worker.experiment import Experiment
@@ -54,6 +54,9 @@ def insert_trials(experiment_name, points, cmdconfig=None, raise_exc=True):
     experiment.configure(experiment.configuration)
 
     valid_points = []
+
+    print(experiment.space)
+
     for point in points:
         try:
             assert point in experiment.space

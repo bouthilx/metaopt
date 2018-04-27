@@ -10,8 +10,6 @@
 """
 import os
 
-from orion.client.manual import insert_trials  # noqa
-
 IS_ORION_ON = False
 _HAS_REPORTED_RESULTS = False
 RESULTS_FILENAME = os.getenv('ORION_RESULTS_PATH', None)
