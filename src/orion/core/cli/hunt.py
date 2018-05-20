@@ -50,7 +50,7 @@ def add_subparser(parser):
     orion_group.add_argument(
         "--max-broken", type=int, metavar='#',
         help="maximum number of broken trials to be tolerated before declaring "
-             "experiment as broken (default: %s)" % resolve_config.DEF_CMD_MAX_TRIALS[1])
+             "experiment as broken (default: %s)" % resolve_config.DEF_CMD_MAX_BROKEN[1])
 
     evc_cli.get_branching_args_group(hunt_parser) 
     cli.get_user_args_group(hunt_parser)
@@ -67,4 +67,4 @@ def main(args):
     # TODO: simplify when parameter parsing is refactored
     worker_trials = ExperimentBuilder().fetch_full_config(args)['worker_trials']
     experiment = EVCBuilder().build_from(args)
-    workon(experiment, worker_trials)
+    return workon(experiment, worker_trials)

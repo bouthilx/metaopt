@@ -33,6 +33,9 @@ def workon(experiment, worker_trials=None):
         # When worker_trials is inf
         iterator = itertools.count()
     for _ in iterator:
+        if experiment.is_broken:
+            log.debug("#### Experiment is broken.")
+            break
         log.debug("#### Try to reserve a new trial to evaluate.")
         trial = experiment.reserve_trial(score_handle=producer.algorithm.score)
 
@@ -53,17 +56,23 @@ def workon(experiment, worker_trials=None):
             log.debug("#### Successfully reserved %s to evaluate. Consuming...", trial)
             consumer.consume(trial)
 
-    stats = experiment.stats
-    best = Database().read('trials', {'_id': stats['best_trials_id']})[0]
+    success = experiment.is_done  # Last chance for success
+    if success:
+        stats = experiment.stats
+        best = Database().read('trials', {'_id': stats['best_trials_id']})[0]
 
-    stats_stream = io.StringIO()
-    pprint.pprint(stats, stream=stats_stream)
-    stats_string = stats_stream.getvalue()
+        stats_stream = io.StringIO()
+        pprint.pprint(stats, stream=stats_stream)
+        stats_string = stats_stream.getvalue()
 
-    best_stream = io.StringIO()
-    pprint.pprint(best['params'], stream=best_stream)
-    best_string = best_stream.getvalue()
+        best_stream = io.StringIO()
+        pprint.pprint(best['params'], stream=best_stream)
+        best_string = best_stream.getvalue()
 
-    log.info("#####  Search finished successfully  #####")
-    log.info("\nRESULTS\n=======\n%s\n", stats_string)
-    log.info("\nBEST PARAMETERS\n===============\n%s", best_string)
+        log.info("#####  Search finished successfully  #####")
+        log.info("\nRESULTS\n=======\n%s\n", stats_string)
+        log.info("\nBEST PARAMETERS\n===============\n%s", best_string)
+        return 0
+
+    log.error("Search ended due to too many broken trials!!!\nCheck log and database to debug!")
+    return 1
