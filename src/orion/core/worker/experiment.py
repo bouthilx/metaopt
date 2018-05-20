@@ -82,9 +82,9 @@ class Experiment(object):
 
     """
 
-    __slots__ = ('name', 'refers', 'metadata', 'pool_size', 'max_trials',
+    __slots__ = ('name', 'refers', 'metadata', 'pool_size', 'max_trials', 'max_broken',
                  'algorithms', '_db', '_init_done', '_id', '_node', '_last_fetched')
-    non_branching_attrs = ('pool_size', 'max_trials')
+    non_branching_attrs = ('pool_size', 'max_trials', 'max_broken')
 
     def __init__(self, name):
         """Initialize an Experiment object with primary key (:attr:`name`, :attr:`user`).
@@ -113,6 +113,7 @@ class Experiment(object):
         self.metadata = {'user': user}
         self.pool_size = None
         self.max_trials = None
+        self.max_broken = None
         self.algorithms = None
 
         config = self._db.read('experiments',
@@ -339,6 +340,24 @@ class Experiment(object):
 
         return ((num_completed_trials >= self.max_trials) or
                 (self._init_done and self.algorithms.is_done))
+
+    @property
+    def is_broken(self):
+        """Return True, if this experiment is considered to be broken.
+
+        .. note:: To be used as a terminating condition for a failed ``Worker``.
+        """
+        query = dict(
+            experiment=self._id,
+            status='broken'
+            )
+        num_broken_trials = self._db.count('trials', query)
+
+        if num_broken_trials >= self.max_broken:
+            self._db.write('experiments', {'status': 'broken'}, {'_id': self._id})
+            return True
+
+        return False
 
     @property
     def space(self):

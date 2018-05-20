@@ -37,6 +37,7 @@
   # orion's configuration
   pool_size: 2
   max_trials: 1000
+  max_broken: 3
 
   # **complete** specification of algorithms used
   # user's configuration, but defaults are inferred
@@ -68,6 +69,7 @@
     adapter: []
   pool_size: 2
   max_trials: 1000
+  max_broken: 3
   algorithms:
     dumbalgo:  # this must be logged as `Experiment` would log it, complete specification
       value: 5
@@ -96,6 +98,7 @@
     adapter: []
   pool_size: 2
   max_trials: 1
+  max_broken: 3
   status: done
   algorithms:
     dumbalgo:  # this must be logged as `Experiment` would log it, complete specification
@@ -125,6 +128,7 @@
     adapter: []
   pool_size: 2
   max_trials: 1000
+  max_broken: 3
   algorithms:
     dumbalgo:  # this must be logged as `Experiment` would log it, complete specification
       value: 5
@@ -618,6 +622,45 @@
     - name: /decoding_layer
       type: categorical
       value: rnn
+      value: lstm_with_attention
+
+- experiment: supernaedo2
+
+  status: broken
+  worker: ~
+  submit_time: 2017-11-23T04:00:00
+  start_time: 2017-11-23T04:00:00
+  end_time: ~
+  results:
+    - name: ~
+      type: objective  # objective, constraint
+      value: ~
+  params:
+    - name: /encoding_layer
+      type: categorical
+      value: lstm
+    - name: /decoding_layer
+      type: categorical
+      value: lstm_with_attention
+
+- experiment: supernaedo2
+
+  status: broken
+  worker: ~
+  submit_time: 2017-11-23T04:00:00
+  start_time: 2017-11-23T04:00:00
+  end_time: ~
+  results:
+    - name: ~
+      type: objective  # objective, constraint
+      value: ~
+  params:
+    - name: /encoding_layer
+      type: categorical
+      value: lstm
+    - name: /decoding_layer
+      type: categorical
+      value: lstm_with_attention
 
 ---
 

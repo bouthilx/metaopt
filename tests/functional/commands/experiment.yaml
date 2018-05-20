@@ -25,6 +25,7 @@
     parent_id: null
   pool_size: 2
   max_trials: 1000
+  max_broken: 3
   algorithms:
     random: {}
 
@@ -48,6 +49,7 @@
     parent_id: null
   pool_size: 2
   max_trials: 1000
+  max_broken: 3
   algorithms:
     random: {}
 
@@ -72,4 +74,5 @@
   pool_size: 2
   max_trials: 1000
   algorithms: 
+  max_broken: 3
     random: {}

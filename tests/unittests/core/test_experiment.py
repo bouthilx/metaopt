@@ -130,6 +130,7 @@ def new_config(random_dt):
                           "diff_sha": "diff"}},
         pool_size=10,
         max_trials=1000,
+        max_broken=3,
         algorithms={'dumbalgo': {}},
         # attrs starting with '_' also
         _id='fasdfasfa',
@@ -156,6 +157,7 @@ class TestInitExperiment(object):
         assert len(exp.metadata) == 1
         assert exp.pool_size is None
         assert exp.max_trials is None
+        assert exp.max_broken is None
         assert exp.algorithms is None
         with pytest.raises(AttributeError):
             exp.this_is_not_in_config = 5
@@ -174,6 +176,7 @@ class TestInitExperiment(object):
         assert len(exp.metadata) == 1
         assert exp.pool_size is None
         assert exp.max_trials is None
+        assert exp.max_broken is None
         assert exp.algorithms is None
         with pytest.raises(AttributeError):
             exp.this_is_not_in_config = 5
@@ -191,6 +194,7 @@ class TestInitExperiment(object):
         assert exp._last_fetched == exp_config[0][0]['metadata']['datetime']
         assert exp.pool_size == exp_config[0][0]['pool_size']
         assert exp.max_trials == exp_config[0][0]['max_trials']
+        assert exp.max_broken == exp_config[0][0]['max_broken']
         assert exp.algorithms == exp_config[0][0]['algorithms']
         with pytest.raises(AttributeError):
             exp.this_is_not_in_config = 5
@@ -225,6 +229,8 @@ class TestConfigProperty(object):
         assert cfg['pool_size'] is None
         assert cfg['max_trials'] is None
         assert cfg['algorithms'] is None
+        assert cfg['max_broken'] is None
+        assert len(cfg) == 8
 
     @pytest.mark.skip(reason='Interactive prompt problems')
     def test_good_set_before_init_hit_with_diffs(self, exp_config):
@@ -280,6 +286,25 @@ class TestConfigProperty(object):
         assert exp._id == exp_config[0][0].pop('_id')
         assert exp.configuration == exp_config[0][0]
 
+    def test_good_set_before_init_hit_no_diffs_exc_pool_size(self, exp_config):
+        """Trying to set, and NO differences were found from the config pulled from db.
+
+        Everything is normal, nothing changes. Experiment is resumed,
+        perhaps with more workers that evaluate (an exception is 'max_broken').
+        """
+        exp = Experiment('supernaedo2')
+        # Deliver an external configuration to finalize init
+        exp_config[0][0]['max_broken'] = 10
+        exp_config[0][0]['status'] = 'pending'
+        exp.configure(exp_config[0][0])
+        exp_config[0][0]['algorithms']['dumbalgo']['done'] = False
+        exp_config[0][0]['algorithms']['dumbalgo']['judgement'] = None
+        exp_config[0][0]['algorithms']['dumbalgo']['scoring'] = 0
+        exp_config[0][0]['algorithms']['dumbalgo']['suspend'] = False
+        exp_config[0][0]['algorithms']['dumbalgo']['value'] = 5
+        assert exp._id == exp_config[0][0].pop('_id')
+        assert exp.configuration == exp_config[0][0]
+
     def test_good_set_before_init_no_hit(self, random_dt, database, new_config):
         """Trying to set, overwrite everything from input."""
         exp = Experiment(new_config['name'])
@@ -309,6 +334,7 @@ class TestConfigProperty(object):
         assert exp.metadata == new_config['metadata']
         assert exp.pool_size == new_config['pool_size']
         assert exp.max_trials == new_config['max_trials']
+        assert exp.max_broken == new_config['max_broken']
         #  assert exp.algorithms == new_config['algorithms']
 
     def test_inconsistent_1_set_before_init_no_hit(self, random_dt, new_config):
@@ -624,6 +650,13 @@ def test_is_done_property_with_algo(hacked_exp):
     assert hacked_exp.is_done is False
     hacked_exp.algorithms.algorithm.done = True
     assert hacked_exp.is_done is True
+
+
+def test_is_broken_property(hacked_exp):
+    """Check experiment stopping conditions for maximum number of trials completed."""
+    assert hacked_exp.is_broken is False
+    hacked_exp.max_broken = 2
+    assert hacked_exp.is_broken is True
 
 
 def test_experiment_stats(hacked_exp, exp_config, random_dt):
