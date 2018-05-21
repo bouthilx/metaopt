@@ -245,7 +245,7 @@ class Experiment(object):
 
         return selected_trial
 
-    def push_completed_trial(self, trial):
+    def push_completed_trial(self, trial, status='completed'):
         """Inform database about an evaluated `trial` with results.
 
         :param trial: Corresponds to a successful evaluation of a particular run.
@@ -257,7 +257,7 @@ class Experiment(object):
 
         """
         trial.end_time = datetime.datetime.utcnow()
-        trial.status = 'completed'
+        trial.status = status
         self._db.write('trials', trial.to_dict(), query={'_id': trial.id})
 
     def register_trials(self, trials):
@@ -332,6 +332,11 @@ class Experiment(object):
             To be used as a terminating condition in a ``Worker``.
 
         """
+        self.status = self._db.read('experiments', {'_id': self._id},
+                                    selection={'status': 1})
+        if self.status == 'done':
+            return True
+
         query = dict(
             experiment=self._id,
             status='completed'
@@ -347,6 +352,11 @@ class Experiment(object):
 
         .. note:: To be used as a terminating condition for a failed ``Worker``.
         """
+        self.status = self._db.read('experiments', {'_id': self._id},
+                                    selection={'status': 1})
+        if self.status == 'broken':
+            return True
+
         query = dict(
             experiment=self._id,
             status='broken'
