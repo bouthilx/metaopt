@@ -132,7 +132,7 @@ class Trial(object):
         function or of an 'constraint' expression.
         """
 
-        allowed_types = ('objective', 'constraint', 'gradient')
+        allowed_types = ('objective', 'constraint', 'gradient', 'statistic', 'lie')
 
     class Param(Value):
         """Types for a `Param` can be either an integer (discrete value),
@@ -226,6 +226,14 @@ class Trial(object):
         return self._fetch_one_result_of_type('objective')
 
     @property
+    def lie(self):
+        """Return this trial's fake objective value if it was set, else None.
+
+        :rtype: `Trial.Result`
+        """
+        return self._fetch_one_result_of_type('lie')
+
+    @property
     def gradient(self):
         """Return this trial's gradient value if it is evaluated, else None.
 
@@ -250,7 +258,12 @@ class Trial(object):
         """
         if not self.params:
             raise ValueError("Cannot distinguish this trial, as 'params' have not been set.")
-        return hashlib.md5(self.params_repr().encode('utf-8')).hexdigest()
+        key = self.params_repr().encode('utf-8')
+        # Trial may have different fake objective throughout optimization so that should
+        # be discernable.
+        key += self._repr_values(self.lie)
+
+        return hashlib.md5(key).hexdigest()
 
     @property
     def full_name(self):
