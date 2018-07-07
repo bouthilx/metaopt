@@ -22,6 +22,8 @@ def load_modules_parser(orion_parser):
     modules = module_import.load_modules_in_path('orion.core.cli',
                                                  lambda m: hasattr(m, 'add_subparser'))
 
+    # TODO: Set subparsers as command so that if user
+    # pass an invalid command there is a proper argparse error message
     for module in modules:
         get_parser = getattr(module, 'add_subparser')
         get_parser(orion_parser.get_subparsers())
