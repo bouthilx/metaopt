@@ -531,7 +531,7 @@
       value: gru
     - name: /decoding_layer
       type: categorical
-      value: gru
+      value: lstm_with_attention
 - experiment: supernaedo2
 
   status: new
@@ -549,7 +549,7 @@
       value: gru
     - name: /decoding_layer
       type: categorical
-      value: lstm_with_attention
+      value: rnn
 - experiment: supernaedo2
 
   status: new  # new, reserved, suspended, completed, broken
