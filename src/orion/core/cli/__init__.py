@@ -10,6 +10,7 @@
 
 """
 import logging
+import sys
 
 from orion.core.cli.base import OrionArgsParser
 from orion.core.utils import module_import
