@@ -427,19 +427,6 @@ class SpaceBuilder(object):
                 self.space.register(dimension)
                 self.userargs_tmpl[namespace] = prefix + '='
 
-        # Risky assumption about the first non-interacting argument being a
-        # user's script configuration file. May be dropped in the future.
-        # Quite surely if TODO @221 is implemented because user can specify
-        # how their configuration is supposed to be parsed, so ciao.
-        # For now issue a warning if this is going to happen.
-        if not userconfig and '_0' in self.userargs_tmpl:
-            if os.path.isfile(self.userargs_tmpl['_0']):
-                userconfig = self.userargs_tmpl['_0']
-                log.info("Using '%s' as path to user script's configuration file!", userconfig)
-                # '_0' is 'config' now, replace key in the correct order
-                self.userargs_tmpl = replace_key_in_order(self.userargs_tmpl, '_0', 'config')
-                self.userargs_tmpl['config'] = ''
-
         return userconfig
 
     def build_to(self, config_path, trial, experiment=None):
