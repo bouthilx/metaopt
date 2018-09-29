@@ -194,7 +194,7 @@ class Consumer(object):
                                                       self.current_trial,
                                                       self.experiment)
 
-            command = [self.script_path] + cmd_args
+            command = cmd_args  # [self.script_path] + cmd_args
             return self.interact_with_script(command, results_file)
 
     def interact_with_script(self, command, results_file):
