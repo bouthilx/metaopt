@@ -332,11 +332,6 @@ class Experiment(object):
             To be used as a terminating condition in a ``Worker``.
 
         """
-        self.status = self._db.read('experiments', {'_id': self._id},
-                                    selection={'status': 1})
-        if self.status == 'done':
-            return True
-
         query = dict(
             experiment=self._id,
             status='completed'
@@ -352,22 +347,13 @@ class Experiment(object):
 
         .. note:: To be used as a terminating condition for a failed ``Worker``.
         """
-        self.status = self._db.read('experiments', {'_id': self._id},
-                                    selection={'status': 1})
-        if self.status == 'broken':
-            return True
-
         query = dict(
             experiment=self._id,
             status='broken'
             )
         num_broken_trials = self._db.count('trials', query)
 
-        if num_broken_trials >= self.max_broken:
-            self._db.write('experiments', {'status': 'broken'}, {'_id': self._id})
-            return True
-
-        return False
+        return num_broken_trials >= self.max_broken
 
     @property
     def space(self):

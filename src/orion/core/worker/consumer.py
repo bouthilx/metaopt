@@ -15,7 +15,6 @@ import sys
 import tempfile
 
 from orion.core.io.convert import JSONConverter
-from orion.core.io.database import Database
 from orion.core.io.space_builder import SpaceBuilder
 from orion.core.worker.trial import Trial
 
@@ -159,8 +158,6 @@ class Consumer(object):
 
         except SystemExit:
             new_status = 'broken'
-            Database().write('experiments', {'status': 'broken'},
-                             {'_id': self.experiment._id})  # pylint:disable=protected-access
             raise
 
         except Consumer.SuspendTrial:
