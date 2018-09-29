@@ -11,6 +11,7 @@
 """
 
 import logging
+import signal
 
 from orion.core.cli import base as cli
 from orion.core.cli import evc as evc_cli
@@ -18,8 +19,27 @@ from orion.core.io import resolve_config
 from orion.core.io.evc_builder import EVCBuilder
 from orion.core.io.experiment_builder import ExperimentBuilder
 from orion.core.worker import workon
+from orion.core.worker.consumer import Consumer
 
 log = logging.getLogger(__name__)
+
+
+INTERRUPT = """
+***
+Execution of '{exp.name}' interrupted by user
+
+Execution can be resumed using the same name
+$ orion hunt -n {exp.name}
+"""
+
+
+SIGNAL = """
+***
+Execution of '{exp.name}' interrupted by signal
+
+Execution can be resumed using the same name
+$ orion hunt -n {exp.name}
+"""
 
 
 def add_subparser(parser):
@@ -67,4 +87,13 @@ def main(args):
     # TODO: simplify when parameter parsing is refactored
     worker_trials = ExperimentBuilder().fetch_full_config(args)['worker_trials']
     experiment = EVCBuilder().build_from(args)
-    return workon(experiment, worker_trials)
+    try:
+        returncode = workon(experiment, worker_trials)
+    except Consumer.InterruptTrial:
+        print(SIGNAL.format(exp=experiment))
+        return 128 + int(signal.SIGINT)
+    except KeyboardInterrupt:
+        print(INTERRUPT.format(exp=experiment))
+        return 128 + int(signal.SIGINT)
+
+    return returncode

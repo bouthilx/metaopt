@@ -10,15 +10,29 @@
 """
 import logging
 import os
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 
 from orion.core.io.convert import JSONConverter
 from orion.core.io.space_builder import SpaceBuilder
 from orion.core.worker.trial import Trial
 
 log = logging.getLogger(__name__)
+
+
+def sigterm_handler(signal, frame):
+    if sigterm_handler.triggered:
+        return
+    else:
+        sigterm_handler.triggered = True
+
+    raise Consumer.InterruptTrial("Experiment killed by externally from the system")
+
+
+sigterm_handler.triggered = False
 
 
 class Consumer(object):
@@ -54,6 +68,14 @@ class Consumer(object):
        evaluated by the worker.
 
     """
+
+    class InterruptTrial(Exception):
+        """Raise this to communicate that `self.current_trial`'s evaluation
+        has not been completed and that the execution of user's script has been
+        interrupted.
+        """
+
+        pass
 
     class SuspendTrial(Exception):
         """Raise this to communicate that `self.current_trial`'s evaluation
@@ -147,28 +169,41 @@ class Consumer(object):
            https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html
 
         """
+        returncode = None
+        self.current_trial = trial
         try:
-            self.current_trial = trial
-            returncode = None
+            signal.signal(signal.SIGTERM, sigterm_handler)
             returncode = self._consume()
 
-        except KeyboardInterrupt:
+        except Consumer.InterruptTrial:
             new_status = 'interrupted'
             raise
 
-        except SystemExit:
-            new_status = 'broken'
-            raise
+        except KeyboardInterrupt:
+            new_status = 'suspended'
+            time.sleep(0.1)
+            print("\n\nTrial suspended. Press <ctrl-c> again to stop the experiment execution "
+                  "altogether.\n\nReserving another trial in ")
+            for i in range(5, 0, -1):
+                print("{}...".format(i))
+                time.sleep(1)
+            print("\n\nNow continuing with other trials\n")
 
         except Consumer.SuspendTrial:
             new_status = 'suspended'
 
+        except (SystemExit, Exception):
+            new_status = 'broken'
+            raise
+
         finally:
-            if returncode == 0 or (returncode is None and self.current_trial.results):
+            if returncode == 0 or returncode is None and self.current_trial.results:
                 log.debug("### Update successfully evaluated %s.", self.current_trial)
                 self.experiment.push_completed_trial(self.current_trial)
-            else:
+            elif returncode is not None:
                 self.experiment.push_completed_trial(self.current_trial, 'broken')
+            else:
+                self.experiment.push_completed_trial(self.current_trial, new_status)
             self.current_trial = None
 
     def _consume(self):
