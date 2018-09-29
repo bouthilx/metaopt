@@ -167,10 +167,8 @@ class Consumer(object):
             if returncode == 0 or (returncode is None and self.current_trial.results):
                 log.debug("### Update successfully evaluated %s.", self.current_trial)
                 self.experiment.push_completed_trial(self.current_trial)
-            elif returncode is not None:
-                self.experiment.push_completed_trial(self.current_trial, 'broken')
             else:
-                self.experiment.push_completed_trial(self.current_trial, new_status)
+                self.experiment.push_completed_trial(self.current_trial, 'broken')
             self.current_trial = None
 
     def _consume(self):
