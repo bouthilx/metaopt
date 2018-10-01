@@ -338,6 +338,10 @@ class Experiment(object):
             )
         num_completed_trials = self._db.count('trials', query)
 
+        log.debug("Exp is done? {} >= {} ? {}".format(num_completed_trials, self.max_trials,
+                                                      num_completed_trials >= self.max_trials))
+        log.debug("Algo is done? {}".format(self._init_done and self.algorithms.is_done))
+
         return ((num_completed_trials >= self.max_trials) or
                 (self._init_done and self.algorithms.is_done))
 
