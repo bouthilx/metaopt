@@ -51,11 +51,14 @@ def workon(experiment, worker_trials=None):
 
     log.debug("#####  Init Experiment  #####")
     try:
+        log.debug("#####  Running {} trials".format(int(worker_trials)))
         iterator = range(int(worker_trials))
     except (OverflowError, TypeError):
         # When worker_trials is inf
+        log.debug("#####  Inf trials")
         iterator = itertools.count()
-    for _ in iterator:
+    for i in iterator:
+        log.debug("#####  Running {}-th trial".format(i))
         if experiment.is_broken:
             log.error("Search ended due to too many broken trials!!!\nCheck log and database to debug!")
             return 1
