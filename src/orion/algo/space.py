@@ -630,6 +630,17 @@ class Space(OrderedDict):
 
     contains = Dimension
 
+    def keys(self):
+        return sorted(super(Space, self).keys())
+
+    def values(self):
+        for key in self.keys():
+            yield self[key]
+
+    def items(self):
+        for key in self.keys():
+            yield key, self[key]
+
     def register(self, dimension):
         """Register a new dimension to `Space`."""
         self[dimension.name] = dimension
