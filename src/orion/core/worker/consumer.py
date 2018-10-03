@@ -197,7 +197,7 @@ class Consumer(object):
             raise
 
         finally:
-            if returncode == 0 or returncode is None and self.current_trial.results:
+            if returncode == 0:
                 log.debug("### Update successfully evaluated %s.", self.current_trial)
                 self.experiment.push_completed_trial(self.current_trial)
             elif returncode is not None:
@@ -210,29 +210,35 @@ class Consumer(object):
         log.debug("### Create new temporary directory at '%s':", self.tmp_dir)
         # XXX: wrap up with try/finally and safe-release resources explicitly
         # finally, substitute with statement with the creation of an object.
-        with tempfile.TemporaryDirectory(prefix=self.experiment.name + '_',
-                                         dir=self.tmp_dir) as workdirname:
-            log.debug("## New temp consumer context: %s", workdirname)
-            config_file = tempfile.NamedTemporaryFile(mode='w', prefix='trial_',
-                                                      suffix='.conf', dir=workdirname,
-                                                      delete=False)
-            config_file.close()
-            log.debug("## New temp config file: %s", config_file.name)
-            results_file = tempfile.NamedTemporaryFile(mode='w', prefix='results_',
-                                                       suffix='.out', dir=workdirname,
-                                                       delete=False)
-            results_file.close()
-            log.debug("## New temp results file: %s", results_file.name)
+        trial_dir = os.path.join(self.tmp_dir, self.experiment.name, self.current_trial.id)
+        if not os.path.isdir(trial_dir):
+            os.makedirs(trial_dir)
 
-            log.debug("## Building command line argument and configuration for trial.")
-            cmd_args = self.template_builder.build_to(config_file.name,
-                                                      self.current_trial,
-                                                      self.experiment)
+        log.debug("## temp consumer context: %s", trial_dir)
 
-            command = cmd_args  # [self.script_path] + cmd_args
-            return self.interact_with_script(command, results_file)
+        config_path = os.path.join(trial_dir, "trial.conf")
+        with open(config_path, 'w') as f:
+            f.write('')
+            f.close()
 
-    def interact_with_script(self, command, results_file):
+        log.debug("## temp config file: %s", config_path)
+
+        results_path = os.path.join(trial_dir, "results.out")
+        with open(results_path, 'w') as f:
+            f.write('')
+            f.close()
+
+        log.debug("## temp results file: %s", results_path)
+
+        log.debug("## Building command line argument and configuration for trial.")
+        cmd_args = self.template_builder.build_to(config_path,
+                                                  self.current_trial,
+                                                  self.experiment)
+
+        command = cmd_args  # [self.script_path] + cmd_args
+        return self.interact_with_script(command, results_path)
+
+    def interact_with_script(self, command, results_path):
         """Interact with user's script by launching it in a separate process.
 
         When the process exits, evaluation information
@@ -249,7 +255,7 @@ class Consumer(object):
 
         """
         log.debug("## Launch user's script as a subprocess and wait for finish.")
-        script_process = self.launch_process(command, results_file.name)
+        script_process = self.launch_process(command, results_path)
 
         if script_process.returncode is not None:
             return script_process.returncode
@@ -271,7 +277,7 @@ class Consumer(object):
         finally:
             log.debug("## Parse results from file and fill corresponding Trial object.")
             try:
-                results = self.converter.parse(results_file.name)
+                results = self.converter.parse(results_path)
                 self.current_trial.results = [Trial.Result(name=res['name'],
                                                            type=res['type'],
                                                            value=res['value']) for res in results]
@@ -281,14 +287,14 @@ class Consumer(object):
         return returncode
 
     @staticmethod
-    def launch_process(command, results_filename):
+    def launch_process(command, results_path):
         """Facilitate launching a black-box trial.
 
         :returns: Child `subprocess.Popen` object
 
         """
         env = dict(os.environ)
-        env['ORION_RESULTS_PATH'] = str(results_filename)
+        env['ORION_RESULTS_PATH'] = str(results_path)
         process = subprocess.Popen(command, env=env)
         returncode = process.poll()
         if returncode is not None and returncode < 0:
