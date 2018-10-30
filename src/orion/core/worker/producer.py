@@ -93,7 +93,7 @@ class Producer(object):
                 lying_trial.results.append(lying_result)
                 lying_trials.append(lying_trial)
                 log.debug("### Register lie to database: %s", lying_trial)
-                self.experiment.register_trial(lying_trial)
+                self.experiment.register_lie(lying_trial)
 
         return lying_trials
 

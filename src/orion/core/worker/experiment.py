@@ -263,11 +263,31 @@ class Experiment(object):
         trial.status = 'completed'
         self._db.write('trials', trial.to_dict(), query={'_id': trial.id})
 
+    def register_lie(self, lying_trial):
+        """Register in database a *fake* trial created by a strategist object.
+
+        The main difference between fake trial and orignal ones is the addition of a fake objective
+        result, and status being set to completed. The id of the fake trial is different than the id
+        of the original trial, but the original id can be computed using the hashcode on parameters
+        of the fake trial. See mod:`orion.core.worker.strategy` for more information and the
+        Strategist object and generation of fake trials.
+
+        :type lying_trial: `Trial` object
+        """
+        try:
+            # TODO: Test that lying trial have experiment id of current experiment or in the
+            #       Experiment Version Control Tree?
+            lying_trial.status = 'completed'
+            lying_trial.end_time = datetime.datetime.utcnow()
+            self._db.write('lying_trials', lying_trial.to_dict())
+        except DuplicateKeyError:
+            pass
+
     def register_trial(self, trial):
         """Inform database about *new* suggested trial with specific parameter
         values. Each of them correspond to a different possible run.
 
-        :type trials: list of `Trial`
+        :type trial: `Trial` object
         """
         try:
             stamp = datetime.datetime.utcnow()
