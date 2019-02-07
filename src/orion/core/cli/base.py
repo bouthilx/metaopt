@@ -13,6 +13,7 @@ import logging
 import textwrap
 
 import orion
+from orion.core.io import resolve_config
 
 
 CLI_DOC_HEADER = """
@@ -63,6 +64,10 @@ class OrionArgsParser:
             logging.basicConfig(level=logging.DEBUG)
 
         function = args.pop('func')
+
+        args.pop('define_command_config')(config)
+        resolve_config.update_config(args, orion.config)
+
         return args, function
 
     def execute(self, argv):

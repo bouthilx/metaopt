@@ -36,10 +36,10 @@ import logging
 import os
 import socket
 
-from numpy import inf as infinity
 import yaml
 
 import orion
+from orion.core.io.config import Configuration
 from orion.core.utils.flatten import flatten
 
 
@@ -54,34 +54,14 @@ log = logging.getLogger(__name__)
 #                 Default Settings and Environmental Variables                 #
 ################################################################################
 
-# Default settings for command line arguments (option, description)
-DEF_CMD_MAX_TRIALS = (infinity, 'inf/until preempted')
-DEF_CMD_POOL_SIZE = (10, str(10))
-
 DEF_CONFIG_FILES_PATHS = [
     os.path.join(orion.core.DIRS.site_data_dir, 'orion_config.yaml.example'),
     os.path.join(orion.core.DIRS.site_config_dir, 'orion_config.yaml'),
     os.path.join(orion.core.DIRS.user_config_dir, 'orion_config.yaml')
     ]
 
-# list containing tuples of
-# (environmental variable names, configuration keys, default values)
-ENV_VARS_DB = [
-    ('ORION_DB_NAME', 'name', 'orion'),
-    ('ORION_DB_TYPE', 'type', 'MongoDB'),
-    ('ORION_DB_ADDRESS', 'host', socket.gethostbyname(socket.gethostname()))
-    ]
 
-# TODO: Default resource from environmental (localhost)
-
-# dictionary describing lists of environmental tuples (e.g. `ENV_VARS_DB`)
-# by a 'key' to be used in the experiment's configuration dict
-ENV_VARS = dict(
-    database=ENV_VARS_DB
-    )
-
-
-def fetch_config(args):
+def fetch_config_file(args):
     """Return the config inside the .yaml file if present."""
     orion_file = args.get('config')
     config = dict()
@@ -93,68 +73,65 @@ def fetch_config(args):
     return config
 
 
-def fetch_default_options():
-    """Create a dict with options from the default configuration files.
+def define_config(config):
+    if config.config:
+        raise RuntimeError("Configuration already built")
+    define_database_config(config)
+    define_resources_config(config)
 
-    Respect precedence from application's default, to system's and
-    user's.
 
-    .. seealso:: :const:`DEF_CONFIG_FILES_PATHS`
+def define_database_config(config):
+    database_config = Configuration()
+    database_config.add_option(
+        'name', type=str, default='orion', env_var='ORION_DB_NAME')
+    database_config.add_option(
+        'type', type=str, default='MongoDB', env_var='ORION_DB_TYPE')
+    database_config.add_option(
+        'host', type=str,
+        default=socket.gethostbyname(socket.gethostname()),
+        env_var='ORION_DB_ADDRESS')
 
-    """
-    default_config = dict()
+    config.database = database_config
 
-    # get some defaults
-    default_config['name'] = None
-    default_config['max_trials'] = DEF_CMD_MAX_TRIALS[0]
-    default_config['pool_size'] = DEF_CMD_POOL_SIZE[0]
-    default_config['algorithms'] = 'random'
 
-    # get default options for some managerial variables (see :const:`ENV_VARS`)
-    for signifier, env_vars in ENV_VARS.items():
-        default_config[signifier] = {}
-        for _, key, default_value in env_vars:
-            default_config[signifier][key] = default_value
+def define_resources_config(config):
+    resource_config = Configuration()
+    # TODO: ...
+    config.resources = resource_config
 
-    # fetch options from default configuration files
+
+def update_config(args, config):
+    parse_args(args, config)
+
+
+def parse_config_files(config):
     for configpath in DEF_CONFIG_FILES_PATHS:
-        try:
-            with open(configpath) as f:
-                cfg = yaml.safe_load(f)
-                if cfg is None:
-                    continue
-                # implies that yaml must be in dict form
-                for k, v in cfg.items():
-                    if k in ENV_VARS:
-                        default_config[k] = {}
-                        for vk, vv in v.items():
-                            default_config[k][vk] = vv
-                    else:
-                        if k != 'name':
-                            default_config[k] = v
-        except IOError as e:  # default file could not be found
-            log.debug(e)
-        except AttributeError as e:
-            log.warning("Problem parsing file: %s", configpath)
-            log.warning(e)
-
-    return default_config
+        parse_config_file(configpath, config)
 
 
-def fetch_env_vars():
-    """Fetch environmental variables related to orion's managerial data."""
-    env_vars = {}
+def parse_config_file(configpath, config):
+    try:
+        with open(configpath) as f:
+            cfg = yaml.safe_load(f)
+            if cfg is None:
+                return
+            # implies that yaml must be in dict form
+            for k, v in flatten(cfg).items():
+                config[k] = v
+    except IOError as e:  # default file could not be found
+        log.debug(e)
+    except AttributeError as e:
+        log.warning("Problem parsing file: %s", configpath)
+        log.warning(e)
 
-    for signif, evars in ENV_VARS.items():
-        env_vars[signif] = {}
 
-        for var_name, key, _ in evars:
-            value = os.getenv(var_name)
+def parse_args(args, config):
+    if "config" in args:
+        parse_config_file(args['config'], config)
 
-            if value is not None:
-                env_vars[signif][key] = value
-
-    return env_vars
+    for name in list(args.keys()):
+        if name in config:
+            config[name] = args.pop(name)
 
 
 def fetch_metadata(cmdargs):

@@ -8,9 +8,11 @@ from orion.core.io import resolve_config
 from orion.core.io.experiment_builder import ExperimentBuilder
 
 
+@pytest.mark.xfail(reason="TODO: Turn into config test")
 @pytest.mark.usefixtures("clean_db")
 def test_fetch_local_config(config_file):
     """Test local config (default, env_vars, cmdconfig, cmdargs)"""
+    # TODO: Turn into config test
     cmdargs = {"config": config_file}
     local_config = ExperimentBuilder().fetch_full_config(cmdargs, use_db=False)
 
@@ -23,6 +25,7 @@ def test_fetch_local_config(config_file):
     assert local_config['pool_size'] == 1
 
 
+@pytest.mark.xfail(reason="TODO: Turn into config test")
 @pytest.mark.usefixtures("clean_db")
 def test_fetch_local_config_from_incomplete_config(incomplete_config_file):
     """Test local config with incomplete user configuration file
@@ -74,7 +77,7 @@ def test_fetch_full_config_new_config(config_file, exp_config, random_dt):
                              "--encoding_layer~choices(['rnn', 'lstm', 'gru'])",
                              "--decoding_layer~choices(['rnn', 'lstm_with_attention', 'gru'])"]}
     full_config = ExperimentBuilder().fetch_full_config(cmdargs)
-    cmdconfig = ExperimentBuilder().fetch_file_config(cmdargs)
+    cmdconfig = resolve_config.fetch_config_file(cmdargs)
 
     full_config['metadata']['orion_version'] = exp_config[0][0]['metadata']['orion_version']
 
@@ -96,7 +99,7 @@ def test_fetch_full_config_old_config(old_config_file, exp_config, random_dt):
                              "--decoding_layer~choices(['rnn', 'lstm_with_attention', 'gru'])"]}
 
     full_config = ExperimentBuilder().fetch_full_config(cmdargs)
-    cmdconfig = ExperimentBuilder().fetch_file_config(cmdargs)
+    cmdconfig = resolve_config.fetch_config_file(cmdargs)
 
     full_config['metadata']['orion_version'] = exp_config[0][0]['metadata']['orion_version']
 

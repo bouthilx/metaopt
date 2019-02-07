@@ -10,9 +10,12 @@ import pytest
 
 from orion.algo.space import (Categorical, Integer, Real, Space)
 from orion.core.evc import conflicts
+from orion.core.io import resolve_config
 from orion.core.io.convert import (JSONConverter, YAMLConverter)
 from orion.core.io.space_builder import DimensionBuilder
 from orion.core.worker.experiment import Experiment
+import orion
+import orion.core.cli.evc as evc_cli
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -276,3 +279,13 @@ def config_conflict(old_config, new_config):
 def experiment_name_conflict(old_config, new_config):
     """Generate an experiment name conflict"""
     return conflicts.ExperimentNameConflict(old_config, new_config)
+
+
+@pytest.fixture
+def define_branching_config():
+    """Define branching configuration"""
+    evc_cli.define_branching_config(orion.config)
+    yield orion.config
+    orion.config = type(orion.config)()
+    resolve_config.define_config(orion.config)
+    resolve_config.parse_config_files(orion.config)

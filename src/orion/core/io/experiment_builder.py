@@ -89,6 +89,7 @@ hierarchy. From the more global to the more specific, there is:
 import copy
 import logging
 
+import orion
 from orion.core.io import resolve_config
 from orion.core.io.database import Database, DuplicateKeyError
 from orion.core.worker.experiment import Experiment, ExperimentView
@@ -110,19 +111,9 @@ class ExperimentBuilder(object):
         :class:`orion.core.worker.experiment.ExperimentView`
     """
 
-    # pylint:disable=no-self-use
-    def fetch_default_options(self):
-        """Get dictionary of default options"""
-        return resolve_config.fetch_default_options()
-
-    # pylint:disable=no-self-use
-    def fetch_env_vars(self):
-        """Get dictionary of environment variables specific to Oríon"""
-        return resolve_config.fetch_env_vars()
-
-    def fetch_file_config(self, cmdargs):
+    def fetch_config_file(self, cmdargs):
         """Get dictionary of options from configuration file provided in command-line"""
-        return resolve_config.fetch_config(cmdargs)
+        return resolve_config.fetch_config_file(cmdargs)
 
     def fetch_config_from_db(self, cmdargs):
         """Get dictionary of options from experiment found in the database
@@ -145,7 +136,7 @@ class ExperimentBuilder(object):
         """Infer rest information about the process + versioning"""
         return resolve_config.fetch_metadata(cmdargs)
 
-    def fetch_full_config(self, cmdargs, use_db=True):
+    def fetch_full_config(self, cmdargs):
         """Get dictionary of the full configuration of the experiment.
 
         .. seealso::
@@ -156,9 +147,7 @@ class ExperimentBuilder(object):
         Parameters
         ----------
         cmdargs:
-
-        use_db: bool
-            Use experiment configuration found in database if True. Defaults to True.
+            commandline arguments passed by user
 
         Note
         ----
@@ -166,17 +155,12 @@ class ExperimentBuilder(object):
             the database.
 
         """
-        default_options = self.fetch_default_options()
-        env_vars = self.fetch_env_vars()
-        if use_db:
-            config_from_db = self.fetch_config_from_db(cmdargs)
-        else:
-            config_from_db = {}
-        cmdconfig = self.fetch_file_config(cmdargs)
+        config_from_db = self.fetch_config_from_db(cmdargs)
+        cmdconfig = self.fetch_config_file(cmdargs)
         metadata = dict(metadata=self.fetch_metadata(cmdargs))
 
         exp_config = resolve_config.merge_configs(
-            default_options, env_vars, copy.deepcopy(config_from_db), cmdconfig, cmdargs, metadata)
+            copy.deepcopy(config_from_db), cmdconfig, cmdargs, metadata)
 
         # TODO: Find a better solution
         if isinstance(exp_config['algorithms'], dict) and len(exp_config['algorithms']) > 1:
@@ -196,12 +180,10 @@ class ExperimentBuilder(object):
             :class:`orion.core.worker.experiment.ExperimentView` for more information on the
             experiment view object.
         """
-        local_config = self.fetch_full_config(cmdargs, use_db=False)
-
-        db_opts = local_config['database']
+        db_opts = orion.config.database.to_dict()
         dbtype = db_opts.pop('type')
 
-        if local_config.get("debug"):
+        if orion.config.debug:
             dbtype = "EphemeralDB"
 
         # Information should be enough to infer experiment's name.
@@ -212,13 +194,13 @@ class ExperimentBuilder(object):
             if Database().__class__.__name__.lower() != dbtype.lower():
                 raise
 
-        exp_name = local_config['name']
+        exp_name = cmdargs.get('name', None)
         if exp_name is None:
             raise RuntimeError("Could not infer experiment's name. "
                                "Please use either `name` cmd line arg or provide "
                                "one in orion's configuration file.")
 
-        return ExperimentView(local_config["name"])
+        return ExperimentView(exp_name)
 
     def build_from(self, cmdargs):
         """Build a fully configured (and writable) experiment based on full configuration.
@@ -259,10 +241,6 @@ class ExperimentBuilder(object):
             object.
         """
         log.info(config)
-
-        # Pop out configuration concerning databases and resources
-        config.pop('database', None)
-        config.pop('resources', None)
 
         experiment = Experiment(config['name'])
 

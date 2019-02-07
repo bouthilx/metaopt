@@ -10,6 +10,7 @@
 """
 from orion.core.evc import adapters
 from orion.core.evc.conflicts import Resolution
+from orion.core.io.config import Configuration
 
 
 def _add_auto_resolution_argument(parser):
@@ -62,8 +63,22 @@ resolution_arguments = {
     'branch': _add_branching_argument}
 
 
+resolution_argument_types = {
+    'auto_resolution': bool,
+    'algorithm_change': bool,
+    'code_change_type': str,
+    'cli_change_type': str,
+    'config_change_type': str,
+    'branch': str}
+
+
 UNDEFINED_PARSER_ERROR = (
     "A resolution with metavar '{}' is defined but no corresponding parser is defined. "
+    "Please raise an issue on github if you encounter this error message.")
+
+
+UNDEFINED_CONFIG_TYPE_ERROR = (
+    "A resolution with metavar '{}' is defined but no corresponding option type is defined. "
     "Please raise an issue on github if you encounter this error message.")
 
 
@@ -93,3 +108,22 @@ def get_branching_args_group(parser):
 def fetch_branching_configuration(config):
     """Build a dictionary of arguments for branching"""
     return {key: config[key] for key in resolution_arguments if key in config}
+
+
+# TODO Reformat to include information of parser and option type in the same place
+def define_branching_config(config):
+    branching_config = Configuration()
+
+    for resolution_class in sorted(Resolution.__subclasses__(), key=lambda cls: cls.__name__):
+        if not resolution_class.ARGUMENT:
+            continue
+
+        metavar = resolution_class.namespace()
+
+        # This should fail blatantly if we forget to give an option type for a new resolution which
+        # needs argument in command-line for automatic resolution.
+        assert metavar in resolution_argument_types, UNDEFINED_CONFIG_TYPE_ERROR.format(metavar)
+
+        branching_config.add_option(metavar, type=resolution_argument_types[metavar])
+
+    config.branching = branching_config

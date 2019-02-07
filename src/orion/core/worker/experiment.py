@@ -16,6 +16,7 @@ import logging
 import random
 import sys
 
+import orion
 from orion.core.cli.evc import fetch_branching_configuration
 from orion.core.evc.adapters import Adapter, BaseAdapter
 from orion.core.evc.conflicts import detect_conflicts
@@ -398,14 +399,14 @@ class Experiment(object):
             # TODO: When refactoring experiment managenent, is_different_from
             # will be used when EVC is not available.
             # is_new = self._is_different_from(experiment.configuration)
-            branching_configuration = fetch_branching_configuration(config)
             conflicts = detect_conflicts(self.configuration, experiment.configuration)
-            is_new = len(conflicts.get()) > 1 or branching_configuration.get('branch')
+            is_new = (len(conflicts.get()) > 1 or
+                      (orion.config.branching and orion.config.branching.branch))
             if is_new and not enable_branching:
                 raise ValueError("Configuration is different and generate a "
                                  "branching event")
             elif is_new:
-                experiment._branch_config(conflicts, branching_configuration)
+                experiment._branch_config(conflicts)
 
         final_config = experiment.configuration
         self._instantiate_config(final_config)
@@ -420,7 +421,7 @@ class Experiment(object):
             # identical (name, metadata.user) is written first in the database.
 
             self._db.write('experiments', final_config)
-            # XXX: Reminder for future DB implementations:
+            # TODO: Reminder for future DB implementations:
             # MongoDB, updates an inserted dict with _id, so should you :P
             self._id = final_config['_id']
 
@@ -546,13 +547,13 @@ class Experiment(object):
         if self.refers and not isinstance(self.refers.get('adapter'), BaseAdapter):
             self.refers['adapter'] = Adapter.build(self.refers['adapter'])
 
-    def _branch_config(self, conflicts, branching_configuration):
+    def _branch_config(self, conflicts):
         """Ask for a different identifier for this experiment. Set :attr:`refers`
         key to previous experiment's name, the one that we branched from.
 
         :param config: Conflicting configuration that will change based on prompt.
         """
-        experiment_brancher = ExperimentBranchBuilder(conflicts, branching_configuration)
+        experiment_brancher = ExperimentBranchBuilder(conflicts)
 
         if not experiment_brancher.is_resolved or experiment_brancher.auto_resolution:
             branching_prompt = BranchingPrompt(experiment_brancher)

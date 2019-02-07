@@ -66,7 +66,7 @@ def conflicts(new_dimension_conflict, new_cat_dimension_conflict,
 @pytest.fixture
 def branch_builder(conflicts):
     """Generate the experiment branch builder"""
-    return ExperimentBranchBuilder(conflicts, {})
+    return ExperimentBranchBuilder(conflicts)
 
 
 @pytest.fixture
@@ -75,6 +75,7 @@ def branch_solver_prompt(branch_builder):
     return BranchingPrompt(branch_builder)
 
 
+@pytest.mark.usefixtures("define_branching_config")
 class TestCommands(object):
     """Test the commands of the prompt"""
 

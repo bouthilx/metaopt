@@ -12,6 +12,9 @@
 
 import logging
 
+from numpy import inf as infinity
+
+import orion
 from orion.core.cli import base as cli
 from orion.core.cli import evc as evc_cli
 from orion.core.io import resolve_config
@@ -28,22 +31,32 @@ def add_subparser(parser):
     orion_group = cli.get_basic_args_group(hunt_parser)
 
     orion_group.add_argument(
-        '--max-trials', type=int, metavar='#',
+        '--max-trials', type=int, metavar='#', default=infinity,
         help="number of jobs/trials to be completed "
-             "(default: %s)" % resolve_config.DEF_CMD_MAX_TRIALS[1])
+             "(default: inf/until preempted)" % )
 
     orion_group.add_argument(
-        "--pool-size", type=int, metavar='#',
+        "--pool-size", type=int, metavar='#', default=10
         help="number of concurrent workers to evaluate candidate samples "
-             "(default: %s)" % resolve_config.DEF_CMD_POOL_SIZE[1])
+             "(default: 10)")
+
+    orion_group.add_argument(
+        "--algorithms", type=str,
+        help=("Algorithm name with default setting. Use configuration file to define "
+              "specific settings of algorithms."))
 
     evc_cli.get_branching_args_group(hunt_parser)
 
     cli.get_user_args_group(hunt_parser)
 
     hunt_parser.set_defaults(func=main)
+    hunt_parser.set_defaults(config_parser=set_command_config)
 
     return hunt_parser
+
+
+def set_command_config(config):
+    evc_cli.define_branching_config(config)
 
 
 def main(args):

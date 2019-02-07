@@ -21,6 +21,7 @@ and the child experiment.
 
 import logging
 
+import orion
 from orion.algo.space import Dimension
 from orion.core.evc import conflicts
 from orion.core.evc.adapters import CompositeAdapter
@@ -33,14 +34,15 @@ log = logging.getLogger(__name__)
 class ExperimentBranchBuilder:
     """Build a new configuration for the experiment based on parent config."""
 
-    def __init__(self, conflicts, branching_configuration):
+    def __init__(self, conflicts):
         """
         Initialize the ExperimentBranchBuilder by populating a list of the conflicts inside
         the two configurations.
         """
-        self.auto_resolution = branching_configuration.pop('auto_resolution', False)
+        self.auto_resolution = orion.config.branching.auto_resolution
         self.conflicts = conflicts
-        self.conflicting_config.update(branching_configuration)
+        # TODO: need to look how to adapt this
+        # self.conflicting_config.update(branching_configuration)
         self.resolve_conflicts()
 
     @property
