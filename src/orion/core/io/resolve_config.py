@@ -40,6 +40,7 @@ from numpy import inf as infinity
 import yaml
 
 import orion
+from orion.core.utils.flatten import flatten
 
 
 def is_exe(path):
