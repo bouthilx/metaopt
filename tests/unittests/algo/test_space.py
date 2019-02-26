@@ -10,7 +10,7 @@ import pytest
 from scipy.stats import distributions as dists
 
 from orion.algo.space import (
-    Categorical, Dimension, Integer, Real, Space, pack_point, unpack_point)
+    Categorical, Dimension, Integer, pack_point, Real, Space, unpack_point)
 
 
 class TestDimension(object):
@@ -634,4 +634,4 @@ def test_pack_point():
     packed_unpacked_point = pack_point(unpacked, space)
     assert np.allclose(packed_unpacked_point[0], point[0])
     assert np.allclose(packed_unpacked_point[1], point[1])
-    assert packed_unpacked_point[2] ==  point[2]
+    assert packed_unpacked_point[2] == point[2]
