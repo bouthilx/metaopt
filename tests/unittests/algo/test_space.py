@@ -9,7 +9,8 @@ from numpy.testing import assert_array_equal as assert_eq
 import pytest
 from scipy.stats import distributions as dists
 
-from orion.algo.space import (Categorical, Dimension, Integer, Real, Space)
+from orion.algo.space import (
+    Categorical, Dimension, Integer, Real, Space, pack_point, unpack_point)
 
 
 class TestDimension(object):
@@ -594,3 +595,43 @@ class TestSpace(object):
                              "default value=None),\n"\
                              "       Real(name=yolo3, prior={norm: (0.9,), {}}, shape=(), "\
                              "default value=None)])"
+
+
+def test_unpack_point():
+    """Test that unpacked points are properly flattened"""
+    space = Space()
+    dim = Integer('yolo1', 'uniform', -3, 6, shape=(2,))
+    space.register(dim)
+    dim = Integer('yolo2', 'uniform', -3, 6, shape=(3,))
+    space.register(dim)
+    dim = Real('yolo3', 'norm', 0.9)
+    space.register(dim)
+
+    point = space.sample()[0]
+    assert len(point) == 3
+    assert isinstance(point[0], np.ndarray)
+    assert isinstance(point[1], np.ndarray)
+    assert isinstance(point[2], float)
+
+    unpacked = unpack_point(point, space)
+    assert len(unpacked) == 2 + 3 + 1
+    assert all(isinstance(v, np.int64) for v in unpacked[:2 + 3]), unpacked
+    assert isinstance(unpacked[(2 + 3 + 1) - 1], float)
+
+
+def test_pack_point():
+    """Test that packing unpacked points results in a representation identical to original"""
+    space = Space()
+    dim = Integer('yolo1', 'uniform', -3, 6, shape=(2,))
+    space.register(dim)
+    dim = Integer('yolo2', 'uniform', -3, 6, shape=(3,))
+    space.register(dim)
+    dim = Real('yolo3', 'norm', 0.9)
+    space.register(dim)
+
+    point = space.sample()[0]
+    unpacked = unpack_point(point, space)
+    packed_unpacked_point = pack_point(unpacked, space)
+    assert np.allclose(packed_unpacked_point[0], point[0])
+    assert np.allclose(packed_unpacked_point[1], point[1])
+    assert packed_unpacked_point[2] ==  point[2]

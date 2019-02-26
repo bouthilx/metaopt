@@ -735,7 +735,7 @@ class Space(OrderedDict):
 
 
 def pack_point(point, space):
-    """Take a list of points and pack it appropriately as a point from `space`.
+    """Take a list of dims and pack it appropriately as a point from `space`.
 
     :param point: array-like or list of numbers
     :param space: problem's parameter definition,
@@ -752,17 +752,16 @@ def pack_point(point, space):
         if shape:
             assert len(shape) == 1
             next_idx = idx + shape[0]
-            packed.append(tuple(point[idx:next_idx]))
+            packed.append(list(point[idx:next_idx]))
             idx = next_idx
         else:
             packed.append(point[idx])
             idx += 1
-    assert packed in space
-    return packed
+    return list(packed)
 
 
 def unpack_point(point, space):
-    """Flatten `point` in `space` and convert it to a 1D `numpy.ndarray`.
+    """Flatten `point` in `space` and convert it to a 1D list.
 
     :param point: list of number or tuples, in `space`
     :param space: problem's parameter definition,
@@ -780,4 +779,4 @@ def unpack_point(point, space):
             unpacked.extend(subpoint)
         else:
             unpacked.append(subpoint)
-    return unpacked
+    return list(unpacked)
