@@ -396,12 +396,22 @@ class Experiment(object):
                 (self._init_done and self.algorithms.is_done))
 
     @property
+    def executable(self):
+        """Returns True if the algorithm is instantiated.
+
+        When the algorithm is not installed locally, the experiment object can still be created but
+        will contain a string of dictionary definition of the algorithm instead of an algorithm
+        isinstance. This is convenient to later gatter results in the absence of algorithms plugin.
+        """
+        return self._init_done and isinstance(self.algorithms, PrimaryAlgo)
+
+    @property
     def space(self):
         """Return problem's parameter `orion.algo.space.Space`.
 
         .. note:: It will return None, if experiment init is not done.
         """
-        if self._init_done:
+        if self._init_done and self._executable:
             return self.algorithms.space
         return None
 
@@ -413,7 +423,7 @@ class Experiment(object):
             if attrname.startswith('_'):
                 continue
             attribute = getattr(self, attrname)
-            if self._init_done and attrname == 'algorithms':
+            if self._init_done and attrname == 'algorithms': #  and isinstance(attribute, PrimaryAlgo):
                 config[attrname] = attribute.configuration
             else:
                 config[attrname] = attribute
