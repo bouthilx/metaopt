@@ -177,7 +177,7 @@ class Dimension(object):
         then it will be attempted to calculate the interval from which
         a variable is `alpha`-likely to be drawn from.
 
-        .. note:: Lower bound is inclusive, upper bound is exclusive.
+        .. note:: Bounds are inclusive.
 
         """
         return self.prior.interval(alpha, *self._args, **self._kwargs)
@@ -327,7 +327,7 @@ class Real(Dimension):
         if point_.shape != self.shape:
             return False
 
-        return numpy.all(point_ < high) and numpy.all(point_ >= low)
+        return numpy.all(point_ <= high) and numpy.all(point_ >= low)
 
     def interval(self, alpha=1.0):
         """Return a tuple containing lower and upper bound for parameters.

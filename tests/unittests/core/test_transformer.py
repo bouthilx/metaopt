@@ -731,16 +731,17 @@ class TestRequiredSpaceBuilder(object):
 
 
 def test_quantization_does_not_violate_bounds():
-    """Regress on bug that converts valid float in tdim to non valid excl. upper bound."""
+    """Regress on bug that converts valid float in tdim to non valid upper bound."""
     dim = Integer('yo', 'uniform', 3, 7)
     transformers = [Reverse(Quantize())]
     tdim = TransformedDimension(Compose(transformers, dim.type), dim)
-    assert 10 not in dim
-    assert 9 in dim
-    assert 10 not in dim
-    assert 9 in dim
-    # but be careful, because upper bound is exclusive
-    assert 9.6 in tdim
-    assert tdim.reverse(9.6) in dim
+    print(tdim)
+    assert 10.1 not in dim
+    assert 10 in dim
+    assert 10.1 in tdim
+    assert 10 in tdim
+    # but be careful, because upper bound is inclusive
+    assert 10.9 in tdim
+    assert tdim.reverse(10.9) in dim
     # solution is to quantize with 'floor' instead of 'round'
-    assert tdim.reverse(9.6) == 9
+    assert tdim.reverse(10.9) == 10
