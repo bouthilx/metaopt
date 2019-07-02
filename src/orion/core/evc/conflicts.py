@@ -55,7 +55,7 @@ import copy
 import pprint
 import traceback
 
-import orion
+import orion.core
 from orion.algo.space import Dimension
 from orion.core.evc import adapters
 from orion.core.io.database import Database
@@ -497,7 +497,7 @@ class Resolution(object, metaclass=ABCMeta):
                     marked_argument = arg
                     break
         else:
-            marked_argument = orion.config.branching[self.namespace()]
+            marked_argument = orion.core.config.branching[self.namespace()]
 
         return marked_argument
 
@@ -1104,7 +1104,7 @@ class CodeConflict(Conflict):
             :meth:`orion.core.evc.conflicts.Conflict.get_marked_arguments`
 
         """
-        change_type = orion.config.branching[self.CodeResolution.namespace()]
+        change_type = orion.core.config.branching[self.CodeResolution.namespace()]
 
         if change_type:
             return dict(change_type=change_type)
@@ -1234,7 +1234,7 @@ class CommandLineConflict(Conflict):
             :meth:`orion.core.evc.conflicts.Conflict.get_marked_arguments`
 
         """
-        change_type = orion.config.branching[self.CommandLineResolution.namespace()]
+        change_type = orion.core.config.branching[self.CommandLineResolution.namespace()]
 
         if change_type:
             return dict(change_type=change_type)
@@ -1362,7 +1362,7 @@ class ScriptConfigConflict(Conflict):
             :meth:`orion.core.evc.conflicts.Conflict.get_marked_arguments`
 
         """
-        change_type = orion.config.branching[self.ScriptConfigResolution.namespace()]
+        change_type = orion.core.config.branching[self.ScriptConfigResolution.namespace()]
 
         if change_type:
             return dict(change_type=change_type)
@@ -1478,7 +1478,7 @@ class ExperimentNameConflict(Conflict):
             :meth:`orion.core.evc.conflicts.Conflict.get_marked_arguments`
 
         """
-        new_name = orion.config.branching[self.ExperimentNameResolution.namespace()]
+        new_name = orion.core.config.branching[self.ExperimentNameResolution.namespace()]
 
         if new_name:
             return dict(new_name=new_name)

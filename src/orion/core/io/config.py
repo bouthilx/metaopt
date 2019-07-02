@@ -76,7 +76,11 @@ import os
 
 import yaml
 
+from orion.core.utils.flatten import flatten
+
+
 logger = logging.getLogger(__name__)
+
 
 NOT_SET = object()
 
@@ -265,3 +269,19 @@ class Configuration(object):
                 d[name] = attr.to_dict()
 
         return d
+
+
+def parse_config_file(configpath, config):
+    try:
+        with open(configpath) as f:
+            cfg = yaml.safe_load(f)
+            if cfg is None:
+                return
+            # implies that yaml must be in dict form
+            for k, v in flatten(cfg).items():
+                config[k] = v
+    except IOError as e:  # default file could not be found
+        logger.debug(e)
+    except AttributeError as e:
+        logger.warning("Problem parsing file: %s", configpath)
+        logger.warning(e)

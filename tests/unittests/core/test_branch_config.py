@@ -14,7 +14,7 @@ from orion.core.evc.conflicts import (
     detect_conflicts, ExperimentNameConflict, MissingDimensionConflict, NewDimensionConflict,
     ScriptConfigConflict)
 from orion.core.io.experiment_branch_builder import ExperimentBranchBuilder
-import orion
+import orion.core
 
 
 def filter_true(c):
@@ -140,7 +140,7 @@ def changed_cli_config(child_config):
 @pytest.fixture
 def cl_config(create_db_instance):
     """Create a child config with markers for commandline solving"""
-    orion.config.branching.branch = 'test2'
+    orion.core.config.branching.branch = 'test2'
     config = dict(
         name='test',
         algorithms='random',
@@ -726,7 +726,7 @@ class TestResolutionsWithMarkers(object):
         new_name = 'test2'
         create_db_instance.write('experiments', parent_config)
         conflicts = detect_conflicts(parent_config, child_config)
-        orion.config.branching.branch = new_name
+        orion.core.config.branching.branch = new_name
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 1
@@ -744,7 +744,7 @@ class TestResolutionsWithMarkers(object):
         create_db_instance.write('experiments', parent_config)
 
         conflicts = detect_conflicts(parent_config, child_config)
-        orion.config.branching.branch = new_name
+        orion.core.config.branching.branch = new_name
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 1
@@ -754,7 +754,7 @@ class TestResolutionsWithMarkers(object):
         """Test if code conflict is resolved automatically"""
         change_type = evc.adapters.CodeChange.types[0]
         conflicts = detect_conflicts(parent_config, changed_code_config)
-        orion.config.branching.code_change_type = change_type
+        orion.core.config.branching.code_change_type = change_type
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 2
@@ -770,7 +770,7 @@ class TestResolutionsWithMarkers(object):
         """Test if algorithm conflict is resolved automatically"""
         conflicts = detect_conflicts(parent_config, changed_algo_config)
 
-        orion.config.branching.algorithm_change = True
+        orion.core.config.branching.algorithm_change = True
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 2
@@ -786,7 +786,7 @@ class TestResolutionsWithMarkers(object):
         change_type = evc.adapters.ScriptConfigChange.types[0]
         conflicts = detect_conflicts(parent_config, changed_userconfig_config)
 
-        orion.config.branching.config_change_type = change_type
+        orion.core.config.branching.config_change_type = change_type
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 3
@@ -803,7 +803,7 @@ class TestResolutionsWithMarkers(object):
         change_type = evc.adapters.CommandLineChange.types[0]
         conflicts = detect_conflicts(parent_config, changed_cli_config)
 
-        orion.config.branching.cli_change_type = change_type
+        orion.core.config.branching.cli_change_type = change_type
         ExperimentBranchBuilder(conflicts)
 
         assert len(conflicts.get()) == 2

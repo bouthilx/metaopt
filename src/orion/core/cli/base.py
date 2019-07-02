@@ -12,7 +12,7 @@ import argparse
 import logging
 import textwrap
 
-import orion
+import orion.core
 from orion.core.io import resolve_config
 
 
@@ -66,7 +66,7 @@ class OrionArgsParser:
         function = args.pop('func')
 
         args.pop('define_command_config')(config)
-        resolve_config.update_config(args, orion.config)
+        resolve_config.update_config(args, orion.core.config)
 
         return args, function
 

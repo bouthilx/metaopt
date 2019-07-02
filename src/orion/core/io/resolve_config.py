@@ -54,12 +54,6 @@ log = logging.getLogger(__name__)
 #                 Default Settings and Environmental Variables                 #
 ################################################################################
 
-DEF_CONFIG_FILES_PATHS = [
-    os.path.join(orion.core.DIRS.site_data_dir, 'orion_config.yaml.example'),
-    os.path.join(orion.core.DIRS.site_config_dir, 'orion_config.yaml'),
-    os.path.join(orion.core.DIRS.user_config_dir, 'orion_config.yaml')
-    ]
-
 
 def fetch_config_file(args):
     """Return the config inside the .yaml file if present."""
@@ -73,56 +67,8 @@ def fetch_config_file(args):
     return config
 
 
-def define_config(config):
-    if config.config:
-        raise RuntimeError("Configuration already built")
-    define_database_config(config)
-    define_resources_config(config)
-
-
-def define_database_config(config):
-    database_config = Configuration()
-    database_config.add_option(
-        'name', type=str, default='orion', env_var='ORION_DB_NAME')
-    database_config.add_option(
-        'type', type=str, default='MongoDB', env_var='ORION_DB_TYPE')
-    database_config.add_option(
-        'host', type=str,
-        default=socket.gethostbyname(socket.gethostname()),
-        env_var='ORION_DB_ADDRESS')
-
-    config.database = database_config
-
-
-def define_resources_config(config):
-    resource_config = Configuration()
-    # TODO: ...
-    config.resources = resource_config
-
-
 def update_config(args, config):
     parse_args(args, config)
-
-
-def parse_config_files(config):
-    for configpath in DEF_CONFIG_FILES_PATHS:
-        parse_config_file(configpath, config)
-
-
-def parse_config_file(configpath, config):
-    try:
-        with open(configpath) as f:
-            cfg = yaml.safe_load(f)
-            if cfg is None:
-                return
-            # implies that yaml must be in dict form
-            for k, v in flatten(cfg).items():
-                config[k] = v
-    except IOError as e:  # default file could not be found
-        log.debug(e)
-    except AttributeError as e:
-        log.warning("Problem parsing file: %s", configpath)
-        log.warning(e)
 
 
 def parse_args(args, config):

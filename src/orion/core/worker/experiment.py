@@ -16,8 +16,7 @@ import logging
 import random
 import sys
 
-import orion
-from orion.core.cli.evc import fetch_branching_configuration
+import orion.core
 from orion.core.evc.adapters import Adapter, BaseAdapter
 from orion.core.evc.conflicts import detect_conflicts
 from orion.core.io.database import Database, DuplicateKeyError, ReadOnlyDB
@@ -401,7 +400,7 @@ class Experiment(object):
             # is_new = self._is_different_from(experiment.configuration)
             conflicts = detect_conflicts(self.configuration, experiment.configuration)
             is_new = (len(conflicts.get()) > 1 or
-                      (orion.config.branching and orion.config.branching.branch))
+                      (orion.core.config.branching and orion.core.config.branching.branch))
             if is_new and not enable_branching:
                 raise ValueError("Configuration is different and generate a "
                                  "branching event")

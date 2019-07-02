@@ -8,6 +8,7 @@ from pymongo import MongoClient
 import pytest
 import yaml
 
+import orion.core
 from orion.algo.base import (BaseAlgorithm, OptimizationAlgorithm)
 from orion.core.io import resolve_config
 from orion.core.io.database import Database
@@ -97,6 +98,8 @@ def exp_config():
 @pytest.fixture(scope='session')
 def database():
     """Return Mongo database object to test with example entries."""
+    orion.core.config.database.name = 'orion_test'
+    orion.core.config.database.host = 'mongodb://user:pass@localhost'
     client = MongoClient(username='user', password='pass', authSource='orion_test')
     database = client.orion_test
     yield database

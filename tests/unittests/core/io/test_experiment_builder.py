@@ -8,13 +8,12 @@ from orion.core.io import resolve_config
 from orion.core.io.experiment_builder import ExperimentBuilder
 
 
-@pytest.mark.xfail(reason="TODO: Turn into config test")
+@pytest.mark.xfail(reason="TODO: adapt when rebased on develop")
 @pytest.mark.usefixtures("clean_db")
 def test_fetch_local_config(config_file):
     """Test local config (default, env_vars, cmdconfig, cmdargs)"""
-    # TODO: Turn into config test
-    cmdargs = {"config": config_file}
-    local_config = ExperimentBuilder().fetch_full_config(cmdargs, use_db=False)
+    cmdargs = {'name': 'supernaekei', "config": config_file}
+    local_config = ExperimentBuilder().fetch_full_config(cmdargs)
 
     assert local_config['algorithms'] == 'random'
     assert local_config['database']['host'] == 'mongodb://user:pass@localhost'
@@ -25,17 +24,17 @@ def test_fetch_local_config(config_file):
     assert local_config['pool_size'] == 1
 
 
-@pytest.mark.xfail(reason="TODO: Turn into config test")
+@pytest.mark.xfail(reason="TODO: adapt when rebased on develop")
 @pytest.mark.usefixtures("clean_db")
-def test_fetch_local_config_from_incomplete_config(incomplete_config_file):
+def test_fetch_local_config_from_incomplete_config(incomplete_config_file, monkeypatch):
     """Test local config with incomplete user configuration file
     (default, env_vars, cmdconfig, cmdargs)
 
     This is to ensure merge_configs update properly the subconfigs
     """
-    resolve_config.DEF_CONFIG_FILES_PATHS = []
+    monkeypatch.setatt(resolve_config, 'DEF_CONFIG_FILES_PATHS', [])
     cmdargs = {"config": incomplete_config_file}
-    local_config = ExperimentBuilder().fetch_full_config(cmdargs, use_db=False)
+    local_config = ExperimentBuilder().fetch_full_config(cmdargs)
 
     assert local_config['algorithms'] == 'random'
     assert local_config['database']['host'] == 'mongodb://user:pass@localhost'
@@ -49,7 +48,7 @@ def test_fetch_local_config_from_incomplete_config(incomplete_config_file):
 @pytest.mark.usefixtures("clean_db", "null_db_instances", "with_user_tsirif")
 def test_fetch_config_from_db_no_hit(config_file, random_dt):
     """Verify that fetch_config_from_db returns an empty dict when the experiment is not in db"""
-    cmdargs = {'name': 'supernaekei', 'config': config_file}
+    cmdargs = {'name': 'supernaekei'}
     db_config = ExperimentBuilder().fetch_config_from_db(cmdargs)
     assert db_config == {}
 
@@ -57,8 +56,11 @@ def test_fetch_config_from_db_no_hit(config_file, random_dt):
 @pytest.mark.usefixtures("clean_db", "null_db_instances", "with_user_tsirif")
 def test_fetch_config_from_db_hit(config_file, exp_config, random_dt):
     """Verify db config when experiment is in db"""
-    cmdargs = {'name': 'supernaedo2', 'config': config_file}
+    cmdargs = {'name': 'supernaedo2'}
     db_config = ExperimentBuilder().fetch_config_from_db(cmdargs)
+
+    import orion.core
+    assert orion.core.config.database.host == 'mongodb://user:pass@localhost'
 
     assert db_config['name'] == exp_config[0][0]['name']
     assert db_config['refers'] == exp_config[0][0]['refers']

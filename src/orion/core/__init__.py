@@ -13,8 +13,13 @@ training time for automatic early stopping or on-the-fly reconfiguration.
 
 Start by having a look here: https://github.com/mila-udem/orion
 """
+import os
+
+from appdirs import AppDirs
+
+from orion.core.io.config import Configuration, parse_config_file
+
 from ._version import get_versions
-from .utils._appdirs import AppDirs
 
 VERSIONS = get_versions()
 del get_versions
@@ -34,3 +39,65 @@ __url__ = 'https://github.com/mila-udem/orion'
 
 DIRS = AppDirs(__name__, __author_short__)
 del AppDirs
+
+DEF_CONFIG_FILES_PATHS = [
+    os.path.join(DIRS.site_data_dir, 'orion_config.yaml.example'),
+    os.path.join(DIRS.site_config_dir, 'orion_config.yaml'),
+    os.path.join(DIRS.user_config_dir, 'orion_config.yaml')
+    ]
+
+# Default values
+# env vars
+# Config files
+# Command line
+
+# DB only concerns experiment and thus should not affect configuration.
+
+
+def define_config():
+    config = Configuration()
+    define_database_config(config)
+    define_resources_config(config)
+    return config
+
+
+def define_database_config(config):
+    database_config = Configuration()
+    database_config.add_option(
+        'name', type=str, default='orion', env_var='ORION_DB_NAME')
+    database_config.add_option(
+        'type', type=str, default='MongoDB', env_var='ORION_DB_TYPE')
+    database_config.add_option(
+        'host', type=str,
+        default='localhost',
+        env_var='ORION_DB_ADDRESS')
+
+    config.database = database_config
+
+
+def define_resources_config(config):
+    resource_config = Configuration()
+    # TODO: ...
+    config.resources = resource_config
+
+
+def build_config():
+    config = define_config()
+    for file_path in DEF_CONFIG_FILES_PATHS:
+        parse_config_file(file_path, config)
+
+    return config
+
+config = build_config()
+
+# Define config
+# database
+# resources
+# command specific
+#     branching
+
+# Set config
+# Load global config
+# command specific
+#     parse config file
+#     parse args

@@ -89,7 +89,7 @@ hierarchy. From the more global to the more specific, there is:
 import copy
 import logging
 
-import orion
+import orion.core
 from orion.core.io import resolve_config
 from orion.core.io.database import Database, DuplicateKeyError
 from orion.core.worker.experiment import Experiment, ExperimentView
@@ -180,10 +180,10 @@ class ExperimentBuilder(object):
             :class:`orion.core.worker.experiment.ExperimentView` for more information on the
             experiment view object.
         """
-        db_opts = orion.config.database.to_dict()
+        db_opts = orion.core.config.database.to_dict()
         dbtype = db_opts.pop('type')
 
-        if orion.config.debug:
+        if orion.core.config.debug:
             dbtype = "EphemeralDB"
 
         # Information should be enough to infer experiment's name.
