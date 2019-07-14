@@ -15,6 +15,7 @@
    :maxdepth: 1
 
    user/pytorch
+   user/apis
    user/evc
    user/algorithms
 
