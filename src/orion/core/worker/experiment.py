@@ -284,7 +284,6 @@ class Experiment(object):
         for trial in trials:
             query['_id'] = trial.id
             log.debug('Setting lost trial %s status to interrupted...', trial.id)
-
             updated = self._storage.update_trial(trial, status='interrupted', where=query)
             log.debug('success' if updated else 'failed')
 
