@@ -59,7 +59,6 @@ class Producer(object):
         n_attempts = 0
 
         while sampled_points < self.pool_size and n_attempts < self.max_attempts:
-            n_attempts += 1
             log.debug("### Algorithm suggests new points.")
 
             new_points = self.naive_algorithm.suggest(self.pool_size)
@@ -75,18 +74,21 @@ class Producer(object):
                     self.experiment.register_trial(new_trial)
                     sampled_points += 1
                 except DuplicateKeyError:
-                    log.debug("#### Duplicate sample. Updating algo to produce new ones.")
+                    log.debug("#### Duplicate sample %s. Updating algo to produce new ones.",
+                              new_trial.id)
                     self.update()
+                    n_attempts += 1
                     break
 
         if n_attempts >= self.max_attempts:
             raise RuntimeError("Looks like the algorithm keeps suggesting trial configurations"
-                               "that already exist in the database. Could be that you reached "
+                               "that already exist in the database ({} attempts). "
+                               "Could be that you reached "
                                "a point of convergence and the algorithm cannot find anything "
                                "better. Or... something is broken. Try increasing `max_attempts` "
                                "or please report this error on "
                                "https://github.com/epistimio/orion/issues if something looks "
-                               "wrong.")
+                               "wrong.".format(n_attempts))
 
     def update(self):
         """Pull newest completed trials and all non completed trials to update naive model."""
