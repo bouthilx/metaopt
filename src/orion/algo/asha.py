@@ -241,16 +241,20 @@ class Bracket():
         _, rung = self.rungs[rung_id]
         next_rung = self.rungs[rung_id + 1][1]
 
+        rung_size = len(rung)
         rung = list(sorted((objective, point) for objective, point in rung.values()
                            if objective is not None))
         k = len(rung) // self.reduction_factor
         k = min(k, len(rung))
+        logger.debug('There is %d candidates (out of %d)', len(rung), rung_size)
+        logger.debug('Top %d will be considered', k)
 
         for i in range(k):
             point = rung[i][1]
             _id = self.asha.get_id(point)
             if _id not in next_rung:
                 return point
+            logger.debug('Point %s already promoted', point)
 
         return None
 
@@ -274,6 +278,7 @@ class Bracket():
 
         """
         for rung_id in range(len(self.rungs) - 2, -1, -1):
+            logger.debug('Looking for promotion @ %s', self.rungs[rung_id][0])
             candidate = self.get_candidate(rung_id)
             if candidate:
 
