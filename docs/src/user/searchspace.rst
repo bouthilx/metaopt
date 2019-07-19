@@ -70,7 +70,7 @@ to make them compatible with specific algorithms
 Real
 ----
 
-All continous priors are automatically casted to :class:`Real`.
+All continuous priors are automatically casted to :class:`Real`.
 
 .. _integer-dim:
 
@@ -83,10 +83,9 @@ distributions can be casted to :class:`Integer` by setting ``discrete=True``
 
 .. warning::
 
-   We recommend using continous priors with ``discrete=True``
-   as there is an issue with scipy discrete distribution because of incorrect interval. Issue
-   is documented
-   `here <https://github.com/Epistimio/orion/issues/49>`_.
+   We recommend using continuous priors with ``discrete=True``
+   as there is an issue with scipy discrete distribution because of incorrect intervals.
+   The issue is documented `here <https://github.com/Epistimio/orion/issues/49>`_.
 
 Categorical
 -----------
@@ -106,26 +105,26 @@ Special arguments
 ``discrete``
 ------------
 
-ex: ``unifor(0, 10, discrete=True)``
+ex: ``uniform(0, 10, discrete=True)``
 
-Argument to cast a continous distribution into :ref:`integer-dim`. Defaults to ``False``.
+Argument to cast a continuous distribution into :ref:`integer-dim`. Defaults to ``False``.
 
 ``default_value``
 -----------------
 
-ex: ``unifor(0, 10, default_value=5)``
+ex: ``uniform(0, 10, default_value=5)``
 
 Dimensions can be set to a default value so that commandline call `insert` can support insertion
-without specifing this hyperparameter, assigning it the default value. This is also usefull in when
+without specifying this hyperparameter, assigning it the default value. This is also useful in when
 using the :ref:`EVC system`, so that experiments where an hyperparameter is deleted or added can
 adapt trials from other experiments by using the default value.
 
 ``shape``
 ---------
 
-ex: ``unifor(0, 10, shape=2)``
+ex: ``uniform(0, 10, shape=2)``
 
-Some hyper-parameters may have multiple dimensions. This can be set using ``shape``
+Some hyperparameters may have multiple dimensions. This can be set using ``shape``
 
 Configuration
 =============
@@ -150,7 +149,7 @@ You can use configuration files to define search space with placeholder
 For now Oríon can only recognize the
 configuration file if it is passed with the argument ``--config`` to the user script. This should
 not be confused with the argument ``--config`` of ``orion hunt``, which is the configuration of
-Oríon. We are here referring the configuration of the user script, represented with
+Oríon. We are here referring to the configuration of the user script, represented with
 ``my_script_config.txt`` in the following example.
 
 .. code-block:: console
@@ -178,7 +177,7 @@ Here is another example with json
       }
     }
 
-And here is an example with python! Note that for other files than for json and yaml, the
+And here is an example with python! Note that for other files other than for json and yaml, the
 placeholders must be defined as ``name~dist(*args, **kwargs)``. Also, note that the code cannot be executed as is,
 but once Oríon makes the substitution it will.
 
@@ -243,9 +242,9 @@ Conditional dependencies
 ------------------------
 
 There is currently no support for conditional dependencies between dimensions.
-Conditional dependencies arises in situations where some hyperparameter defines which algorithm to
-use and each algorithm have its own
-set of different hyperparameter. We plan to support this in the future by replacing our current
+Conditional dependencies arise in situations where some hyperparameter defines which algorithm to
+use and each algorithm has its own
+set of different hyperparameters. We plan to support this in the future by replacing our current
 :class:`Space` implementation by `ConfigSpace`_. This should not change the current interface and
 only add more special arguments. You can see the state of our plan in our `Roadmap`_.
 
