@@ -24,6 +24,7 @@ from orion.core.worker.trial import Trial
 from orion.storage.base import get_storage, Storage
 from orion.storage.legacy import Legacy
 from orion.storage.track import Track
+from orion.storage.mahler import Mahler
 
 
 def _select(lhs, rhs):
@@ -67,7 +68,7 @@ def _remove(file_name):
         pass
 
 
-SINGLETONS = (Storage, Legacy, Database, MongoDB, PickledDB, EphemeralDB, Track)
+SINGLETONS = (Storage, Legacy, Database, MongoDB, PickledDB, EphemeralDB, Track, Mahler)
 
 
 def update_singletons(values=None):
@@ -309,6 +310,50 @@ class LegacyOrionState(BaseOrionState):
         self.initialized = False
 
 
+class MahlerOrionState(BaseOrionState):
+    """See :func:`~orion.utils.tests.BaseOrionState`"""
+
+    def __init__(self, *args, **kwargs):
+        super(MahlerOrionState, self).__init__(*args, **kwargs)
+        self.initialized = False
+
+    @property
+    def database(self):
+        """Retrieve mahler database handle"""
+        return get_storage().client.registrar._db._db
+
+    def init(self, config):
+        """Initialize environment before testing"""
+        self.storage(config)
+        self.initialized = True
+
+        if hasattr(get_storage(), 'client'):
+            self.cleanup()
+
+        self.load_experience_configuration()
+        return self
+
+    def cleanup(self):
+        """Cleanup after testing"""
+
+        if self.initialized:
+            database = self.database
+            assert database.client.address == ('localhost', 27017)
+            database.tasks.report.timestamp.drop()
+            database.tasks.report.drop()
+            database.tasks.status.drop()
+            database.tasks.tags.drop()
+            database.tasks.drop()
+
+        self.initialized = False
+
+    def get_experiment(self, name, version=None):
+        """Make experiment id deterministic"""
+        exp = experiment_builder.build(name, version=version)
+        exp._id = exp.name
+        return exp
+
+
 # We are faking a class constructor here
 # pylint: disable=C0103
 def OrionState(*args, **kwargs):
@@ -317,5 +362,8 @@ def OrionState(*args, **kwargs):
 
     if not storage or storage['type'] == 'legacy':
         return LegacyOrionState(*args, **kwargs)
+
+    if not storage or storage['type'] == 'mahler':
+        return MahlerOrionState(*args, **kwargs)
 
     return BaseOrionState(*args, **kwargs)

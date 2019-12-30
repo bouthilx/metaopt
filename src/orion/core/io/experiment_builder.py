@@ -106,7 +106,7 @@ from orion.core.utils.exceptions import NoConfigurationError, RaceCondition
 from orion.core.worker.experiment import Experiment, ExperimentView
 from orion.core.worker.primary_algo import PrimaryAlgo
 from orion.core.worker.strategy import Strategy
-from orion.storage.base import get_storage, Storage
+from orion.storage.base import BaseStorageProtocol, get_storage, Storage
 
 
 log = logging.getLogger(__name__)
@@ -398,7 +398,7 @@ def _instantiate_strategy(config=None):
 
 def _register_experiment(experiment):
     """Register a new experiment in the database"""
-    experiment.metadata['datetime'] = datetime.datetime.utcnow()
+    experiment.metadata['datetime'] = datetime.datetime.now(datetime.timezone.utc)
     config = experiment.configuration
     # This will raise DuplicateKeyError if a concurrent experiment with
     # identical (name, metadata.user) is written first in the database.
@@ -520,6 +520,8 @@ def setup_storage(storage=None):
     """
     if storage is None:
         storage = orion.core.config.storage.to_dict()
+    if isinstance(storage, BaseStorageProtocol):
+        return
 
     if storage['type'] == 'legacy':
 

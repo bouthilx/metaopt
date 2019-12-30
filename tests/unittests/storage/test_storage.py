@@ -15,6 +15,7 @@ from orion.core.utils.tests import OrionState
 from orion.core.worker.trial import Trial
 from orion.storage.base import FailedUpdate, get_storage, MissingArguments
 from orion.storage.track import HAS_TRACK, REASON
+from orion.storage.mahler import HAS_MAHLER, REASON, mahler
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.WARNING)
@@ -30,6 +31,31 @@ else:
         'type': 'track',
         'uri': 'file://${file}?objective=loss'
     })
+
+
+if not HAS_MAHLER:
+    log.warning('Mahler is not tested because: %s!', REASON)
+else:
+    @mahler.operator()
+    def hpo_operator():
+        print('hpo!')
+
+    @mahler.operator()
+    def trial_operator():
+        print('trial!')
+
+    storage_backends.append({
+        'type': 'mahler',
+        'hpo_operator': hpo_operator,
+        'operator': trial_operator,
+        'objective': 'my_objective',
+        'client': mahler.Client(registrar={
+            'type': 'mongodb',
+            'name': 'test_mahler_with_orion',
+            'host': 'mongodb://user:pass@localhost/test_mahler_with_orion'
+        })
+    })
+
 
 base_experiment = {
     'name': 'default_name',
@@ -164,6 +190,8 @@ class TestStorage:
 
     def test_update_experiment(self, monkeypatch, storage, name='0', user='a'):
         """Test fetch experiments"""
+        if storage and storage['type'] == 'mahler':
+            pytest.skip("Mahler does not support experiment update")
         with OrionState(experiments=generate_experiments(), storage=storage) as cfg:
             storage = cfg.storage()
 
@@ -227,6 +255,8 @@ class TestStorage:
 
     def test_reserve_trial_success(self, storage):
         """Test reserve trial"""
+        if storage and storage['type'] == 'mahler':
+            pytest.skip("Mahler does not support trial reservation from within Oríon")
         with OrionState(
                 experiments=[base_experiment], trials=[base_trial], storage=storage) as cfg:
             storage = cfg.storage()
@@ -321,6 +351,8 @@ class TestStorage:
 
     def test_change_status_success(self, storage):
         """Change the status of a Trial"""
+        if storage and storage['type'] == 'mahler':
+            pytest.skip("Mahler does not support trial status change from within Oríon")
         def check_status_change(new_status):
             with OrionState(
                     experiments=[base_experiment],
@@ -345,6 +377,8 @@ class TestStorage:
 
     def test_change_status_failed_update(self, storage):
         """Change the status of a Trial"""
+        if storage and storage['type'] == 'mahler':
+            pytest.skip("Mahler does not support trial status change from within Oríon")
         def check_status_change(new_status):
             with OrionState(
                     experiments=[base_experiment],
@@ -453,6 +487,8 @@ class TestStorage:
 
     def test_update_heartbeat(self, storage):
         """Test update heartbeat"""
+        if storage and storage['type'] == 'mahler':
+            pytest.skip("Mahler does not support heartbeat from within Oríon.")
         with OrionState(
                 experiments=[base_experiment], trials=generate_trials(), storage=storage) as cfg:
             storage_name = storage

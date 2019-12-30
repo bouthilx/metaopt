@@ -47,6 +47,7 @@ setup_args = dict(
         'Storage': [
             'track = orion.storage.track:Track',
             'legacy = orion.storage.legacy:Legacy',
+            'mahler = orion.storage.mahler:Mahler'
             ]
         },
     install_requires=['PyYAML', 'pymongo>=3', 'numpy', 'scipy', 'gitpython', 'filelock',
