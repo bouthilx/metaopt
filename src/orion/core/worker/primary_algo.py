@@ -8,9 +8,13 @@
    :synopsis: Performs checks and organizes required transformations of points.
 
 """
+import logging
 
 from orion.algo.base import BaseAlgorithm
 from orion.core.worker.transformer import build_required_space
+
+
+log = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-public-methods
@@ -73,7 +77,7 @@ class PrimaryAlgo(BaseAlgorithm):
 
         for point in points:
             if point not in self.transformed_space:
-                raise ValueError("""
+                log.warning("""\
 Point is not contained in space:
 Point: {}
 Space: {}""".format(point, self.transformed_space))
@@ -89,7 +93,12 @@ Space: {}""".format(point, self.transformed_space))
         assert len(points) == len(results)
         tpoints = []
         for point in points:
-            assert point in self.space
+            if point not in self.transformed_space:
+                log.warning("""\
+Point is not contained in space:
+Point: {}
+Space: {}""".format(point, self.transformed_space))
+
             tpoints.append(self.transformed_space.transform(point))
         self.algorithm.observe(tpoints, results)
 
