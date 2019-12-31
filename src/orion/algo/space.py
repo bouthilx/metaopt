@@ -200,7 +200,7 @@ class Dimension:
         then it will be attempted to calculate the interval from which
         a variable is `alpha`-likely to be drawn from.
 
-        .. note:: Lower bound is inclusive, upper bound is exclusive.
+        .. note:: Both lower and upper bound are inclusive.
 
         """
         return self.prior.interval(alpha, *self._args, **self._kwargs)
@@ -316,7 +316,7 @@ class Real(Dimension):
     low : float
        Constrain with a lower bound (inclusive), default ``-numpy.inf``.
     high : float
-       Constrain with an upper bound (exclusive), default ``numpy.inf``.
+       Constrain with an upper bound (inclusive), default ``numpy.inf``.
 
     """
 
@@ -337,7 +337,7 @@ class Real(Dimension):
         low : float
            Lower bound (inclusive), optional; default ``-numpy.inf``.
         high : float:
-           Upper bound (exclusive), optional; default ``numpy.inf``.
+           Upper bound (inclusive), optional; default ``numpy.inf``.
 
         """
         self._low = kwargs.pop('low', -numpy.inf)
@@ -368,7 +368,7 @@ class Real(Dimension):
         if point_.shape != self.shape:
             return False
 
-        return numpy.all(point_ < high) and numpy.all(point_ >= low)
+        return numpy.all(point_ <= high) and numpy.all(point_ >= low)
 
     def interval(self, alpha=1.0):
         """Return a tuple containing lower and upper bound for parameters.
@@ -377,7 +377,7 @@ class Real(Dimension):
         then it will be attempted to calculate the interval from which
         a variable is `alpha`-likely to be drawn from.
 
-        .. note:: Lower bound is inclusive, upper bound is exclusive.
+        .. note:: Both lower and upper bound are inclusive.
 
         """
         prior_low, prior_high = super(Real, self).interval(alpha)
@@ -446,7 +446,7 @@ class _Discrete(Dimension):
 
         Bounds are integers.
 
-        .. note:: Lower bound is inclusive, upper bound is exclusive.
+        .. note:: Both lower and upper bound are inclusive.
 
         """
         low, high = super(_Discrete, self).interval(alpha)
@@ -795,7 +795,7 @@ class Space(dict):
     def interval(self, alpha=1.0):
         """Return a list with the intervals for each contained dimension.
 
-        .. note:: Lower bound is inclusive, upper bound is exclusive.
+        .. note:: Both lower and upper bound are inclusive.
 
         """
         res = list()
