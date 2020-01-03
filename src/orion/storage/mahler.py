@@ -20,7 +20,6 @@ import warnings
 import bson.codec_options
 
 from orion.core.io.database import DuplicateKeyError
-from orion.core.worker.trial import Trial as OrionTrial
 from orion.core.utils.flatten import flatten, unflatten
 from orion.storage.base import BaseStorageProtocol, FailedUpdate, MissingArguments
 
@@ -49,6 +48,12 @@ except ImportError as e:
     mahler = None
     # raise
 
+
+def OrionTrial(**kwargs):
+    # NOTE: To fix circular import...
+    from orion.core.worker.trial import Trial
+    kwargs.pop('hash_params')
+    return Trial(**kwargs)
 
 MAHLER_TO_ORION_STATUS = {
     'OnHold': 'interrupted',
@@ -414,12 +419,15 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
         if not experiments:
             raise ValueError(f'Experiment does not exist: {trial.experiment}')
         experiment = experiments[0]
+        
+        attributes = trial.to_dict()
+        attributes['hash_params'] = trial.hash_params
 
         task = self.client.register(
             self.operator.delay(**trial.params),
             container=self.container,
             tags=[TRIAL_TAG, f'{experiment["name"]}-v{experiment["version"]}'] + self.tags,
-            attributes=trial.to_dict()
+            attributes=attributes
         )
 
         return TrialAdapter(task, trial, objective=self.objective)
@@ -552,12 +560,17 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
 
             uid = trial.id
 
-        trials = list(self.client.find(attributes=dict(_id=uid)))
+        mahler_query = dict(
+            attributes=dict(_id=uid),
+            tags=[TRIAL_TAG] + self.tags
+            )
+
+        trials = list(self.client.find(**mahler_query))
 
         if not trials:
             return None
 
-        assert len(trials) == 1
+        assert len(trials) == 1, len(trials)
         return TrialAdapter(trials[0], objective=self.objective)
 
     def reserve_trial(self, experiment):
