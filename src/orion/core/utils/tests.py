@@ -171,6 +171,7 @@ class BaseOrionState:
         self.lies = []
 
         for exp in self._experiments:
+            exp['_id'] = exp['name']
             get_storage().create_experiment(exp)
 
         for trial in self._trials:

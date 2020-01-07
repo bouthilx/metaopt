@@ -342,7 +342,8 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
     Only supports python API.
     """
 
-    def __init__(self, hpo_operator, operator, objective, client=None, container=None, tags=None):
+    def __init__(self, hpo_operator, operator, objective, client=None, container=None, tags=None,
+                 ignore_tags=None):
         self.hpo_operator = hpo_operator
         # TODO: Operator of trial may require special resources.usage
         #       or that can be fixed at the creation of Mahler() storage since it should be shared
@@ -362,6 +363,11 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
         else:
             tags = [tag for tag in tags if tag not in ORION_TAGS]
         self.tags = tags
+        if ignore_tags is None:
+            ignore_tags = []
+        else:
+            ignore_tags = [tag for tag in ignore_tags if tag not in ORION_TAGS]
+        self.ignore_tags = ignore_tags
         self.lies = dict()
         assert self.objective is not None, 'An objective should be defined!'
 
@@ -403,10 +409,16 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
 
         exp_tasks = self.client.find(**mahler_query)
 
-        experiments = [exp.attributes for exp in exp_tasks]
+
+        exp_tasks = list(exp_tasks)
+
+        experiments = [exp.attributes for exp in exp_tasks if not self._should_ignore(exp.tags)]
 
         # TODO: Support selection
         return experiments
+
+    def _should_ignore(self, tags):
+        return len(set(self.ignore_tags) & set(tags))
 
     def register_trial(self, trial):
         """Create a new trial to be executed"""
@@ -474,6 +486,7 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
 
         trials = [
             TrialAdapter(t, objective=self.objective) for t in self.client.find(**mahler_query)
+            if not self._should_ignore(t.tags)
         ]
         trials.sort(key=sort_key)
         return trials
