@@ -240,7 +240,7 @@ class TrialAdapter:
         if self.objective_key is None:
             raise RuntimeError('no objective key was defined!')
 
-        if self.status != 'completed':
+        if self.status != 'completed' or self.task.output is None:
             return None
 
         return result(flatten(self.task.output)[self.objective_key])
