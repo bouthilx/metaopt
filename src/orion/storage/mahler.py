@@ -105,11 +105,13 @@ def convert_mahler_status(status):
     return MAHLER_TO_ORION_STATUS[status]
 
 
-def experiment_uid(name, version):
+def experiment_uid(name, version, tags):
     """Return an experiment uid from its name and version for Mahler"""
     sha = hashlib.sha256()
     sha.update(name.encode('utf8'))
     sha.update(bytes([version]))
+    for tag in tags:
+        sha.update(tag.encode('utf8'))
     return sha.hexdigest()
 
 
@@ -377,12 +379,14 @@ class Mahler(BaseStorageProtocol):   # noqa: F811
         if self.fetch_experiments(dict(name=config['name'], version=config.get('version', 1))):
             raise DuplicateKeyError('Experiment was already created')
 
-        config.setdefault('_id', experiment_uid(config['name'], config['version']))
+        tags = [EXPERIMENT_TAG, f'{config["name"]}-v{config["version"]}'] + self.tags
+
+        config.setdefault('_id', experiment_uid(config['name'], config['version'], tags))
 
         task = self.client.register(
             self.hpo_operator.delay(),
             container=self.container,
-            tags=[EXPERIMENT_TAG, f'{config["name"]}-v{config["version"]}'] + self.tags,
+            tags=tags,
             attributes=config)
 
         return config
