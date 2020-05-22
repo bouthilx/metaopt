@@ -22,6 +22,7 @@ import orion.core.worker
 from orion.core.worker.trial import Trial
 from orion.core.worker.trial_pacemaker import TrialPacemaker
 from orion.storage.base import FailedUpdate
+from orion.plotting import PlotAccessor
 
 
 log = logging.getLogger(__name__)
@@ -61,7 +62,9 @@ class ExperimentClient:
         if heartbeat is None:
             heartbeat = orion.core.config.worker.heartbeat
         self.heartbeat = heartbeat
+        self.plot = PlotAccessor(self)
         atexit.register(self.set_broken_trials)
+
 
     ###
     # Attributes
