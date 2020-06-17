@@ -99,7 +99,6 @@ Full Example of Global Configuration
                 seed: None
         max_broken: 3
         max_trials: 1000000000
-        pool_size: 1
         strategy:
             MaxParallelStrategy
         worker_trials: 1000000000
@@ -209,7 +208,6 @@ Experiment
                 seed: None
         max_broken: 3
         max_trials: 1000000000
-        pool_size: 1
         strategy:
             MaxParallelStrategy
         worker_trials: 1000000000

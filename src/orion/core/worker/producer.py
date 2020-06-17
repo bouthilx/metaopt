@@ -58,11 +58,6 @@ class Producer(object):
         self.naive_trials_history = None
         self.failure_count = 0
 
-    @property
-    def pool_size(self):
-        """Pool-size of the experiment"""
-        return self.experiment.pool_size
-
     def backoff(self):
         """Wait some time and update algorithm."""
         waiting_time = max(0, random.gauss(1, 0.2))
@@ -87,12 +82,11 @@ class Producer(object):
         self.failure_count = 0
         start = time.time()
 
-        while (sampled_points < self.pool_size and
-               not (self.experiment.is_done or self.naive_algorithm.is_done)):
+        while not sampled_points and not (self.experiment.is_done or self.naive_algorithm.is_done):
             self._sample_guard(start)
 
             log.debug("### Algorithm suggests new points.")
-            new_points = self.naive_algorithm.suggest(self.pool_size)
+            new_points = self.naive_algorithm.suggest(1)
 
             # Sync state of original algo so that state continues evolving.
             self.algorithm.set_state(self.naive_algorithm.state_dict)
